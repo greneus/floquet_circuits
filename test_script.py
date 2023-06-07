@@ -3,11 +3,6 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import random
 
-H = (np.array([[1, 1], [1, -1]])/np.sqrt(2)).astype(complex)
-S = np.array([[1, 0], [0, 1j]]).astype(complex)
-V = H @ S @ H @ S
-W = H @ S
-
 class Random_Clifford_Tableau: 
     '''
     Class for storing and evolving Clifford tableau for a qubit-chain
