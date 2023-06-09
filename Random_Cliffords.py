@@ -106,39 +106,118 @@ class Random_Clifford_Tableau:
         '''
 
         temp = np.copy(self.tableau[:, self.L+i])
-        self.tableau[:, self.L+i] = self.tableau[:, self.L+i]^self.tableau[:, self.i]
+        self.tableau[:, self.L+i] = self.tableau[:, self.L+i]^self.tableau[:, i]
         self.tableau[:, i] = temp
 
         self.tableau[:, 2*self.L] = self.tableau[:, 2*self.L]^self.tableau[:, self.L+i]
+    def apply_random_Pauli(self, i):
+        
+        rand = random.randint(0, 4)
+        if (rand == 0):
+            return
+        elif (rand == 1):
+            self.X(i)
+        elif (rand == 2):
+            self.Y(i)
+        elif (rand == 3):
+            self.Z(i)
 
-    def apply_random_clifford(self, i, j):
-        '''
-        Apply randomly drawn 2-qubit Clifford gate
-        between sites i, j
-        '''
+    def apply_random_H(self, i):
 
-        # Apply C1C2 random single-qubit Cliffords
-        group1 = ["H", "I"]
-        group2 = ["HP", "PH", "I"]
-        group3 = ["X", "Y", "Z", "I"]
-
-        rand = np.randint(0, 3)
-
-
-
-        return 0
+        rand = random.randint(0, 2)
+        if (rand == 0):
+            return
+        elif (rand == 1):
+            self.Hadamard(i)
     
-    def clifford_layer(self):
+    def apply_random_V(self, i):
+
+        rand = random.randint(0, 3)
+        if (rand == 0):
+            return
+        elif (rand == 1):
+            self.HP(i)
+        elif (rand == 2):
+            self.PH(i)
+
+    def apply_random_clifford1(self, i):
         '''
-        Apply a layer of pairwise, random Clifford gates 
+        Apply randomly drawn 1-qubit Clifford gate on site i
         '''
-    def defect_layer(self):
+        self.apply_random_H(i)
+        self.apply_random_V(i)
+        self.apply_random_Pauli(i)
+    
+    def apply_random_clifford2(self, i, j):
         '''
-        Apply a layer of randomly chosen defect gates
-        '''
-    def progress_time(self):
-        '''
-        Apply full-period of Floquet-evolution
+        Apply randomly drawn 2-qubit Clifford on site i and j
         '''
 
-    
+        self.apply_random_clifford1(j)
+        self.apply_random_clifford1(i)
+
+        rand = random.randint(0, 20)
+        if (rand == 0):
+            return
+        elif (rand >=1 and rand <= 9):
+            self.CNOT(i, j)
+            self.apply_random_V(j)
+            self.apply_random_V(i)
+        elif (rand >= 10 and rand <= 18):
+            self.CNOT(i, j)
+            self.CNOT(j, i)
+            self.apply_random_V(j)
+            self.apply_random_V(i)
+        elif (rand == 19):
+            self.CNOT(i, j)
+            self.CNOT(j, i)
+            self.CNOT(i, j)
+
+    def get_Pauli(self, i, stats=False):
+        '''
+        Calculate the Pauli string for each row
+        '''
+        # ab with a: Z component, b X component
+        # 00 --> I
+        # 01 --> X
+        # 10 --> Z
+        # 11 --> Y
+
+        mapping = [['I', 'X'], ['Z', 'Y']]
+        gate_counts = [[0, 0], [0, 0]]
+        p_string = []
+
+        for idx in range(0, self.L):
+            p_string.append(mapping[self.tableau[i, idx]][self.tableau[i, self.L+idx]])
+            gate_counts[self.tableau[i, idx]][self.tableau[i, self.L+idx]] += 1
+        if (stats):
+            nI = gate_counts[0][0]
+            nX = gate_counts[0][1]
+            nY = gate_counts[1][1]
+            nZ = gate_counts[1][0]
+
+            return p_string, [nI, nX, nY, nZ]
+
+        return p_string
+
+
+    def apply_brick_layer(self):
+        '''
+        Apply nearest-neighbour random Clifford gates for whole chain
+        '''
+        for qubit_idx in range(0, self.L-1):
+            self.apply_random_clifford2(qubit_idx, qubit_idx+1)
+        #if (self.L%2 == 1):
+        #   self.apply_random_clifford2(self.L-1, 0)
+        for qubit_idx in range(1, self.L-1):
+            self.apply_random_clifford2(qubit_idx, qubit_idx+1)
+        #self.apply_random_clifford2(self.L-1, 0)
+        #if (self.L%2 == 1):
+        #    self.apply_random_clifford2(0, 1)
+
+
+class Random_Clifford_Evolution(Random_Clifford_Tableau):
+    def __init__(self, L, D, T):
+        Random_Clifford_Tableau.__init__(self, L, D, T)
+
+
